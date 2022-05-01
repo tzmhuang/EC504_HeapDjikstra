@@ -47,33 +47,15 @@ class Node {
     return tmp;
   }
 
-  int updateRank() {
-    int diff, maxr, lr, rr;
-    if (parent == nullptr) {
-      this->rank = (leftChild == nullptr) ? 0 : leftChild->updateRank() + 1;
-      return this->rank;
-    }
-
-    if (rightChild == nullptr && leftChild == nullptr) {
-      this->rank = 0;
-    } else {
-      lr = (leftChild == nullptr) ? 0 : leftChild->updateRank();
-      rr = (rightChild == nullptr) ? 0 : rightChild->updateRank();
-      diff = abs(lr - rr);
-      maxr = max(lr, rr);
-      if (diff > 1)
-        this->rank = maxr;
-      else
-        this->rank = maxr + 1;
-    }
-    return this->rank;
-  }
 };
 
 template <typename Object>
 class RPHeap {
  public:
-  RPHeap() { minRoot = nullptr; }
+  RPHeap() {
+    minRoot = nullptr;
+    heapSize = 0;
+  }
 
   ~RPHeap();
   void insert(Node<Object>* node) {
@@ -93,43 +75,57 @@ class RPHeap {
       }
     }
     numRoot += 1;
+    heapSize += 1;
   }
 
   void decreaseKey(Node<Object>* node, int newkey) {
     assert(newkey < (node->item.key) && "Invalid decreaseKey");
-    Node<Object>* nodeParent = node->parent;
     node->item.key = newkey;  // udpate key
-    if (nodeParent == nullptr) {
+    
+    if (node == minRoot){ // is minRoot
+      return;
+    }
+
+    if (node->parent == nullptr) { // one of the roots
       if (newkey < minRoot->item.key) {
         minRoot = node;
       }
       return;
     }
+
+    //one of the children
+    Node<Object>* nodeParent = node->parent;
     node->parent = nullptr;
-    if (nodeParent->rightChild == node) {
-      nodeParent->rightChild = node->rightChild;
-    } else {
+
+    if (node == nodeParent->leftChild){
       nodeParent->leftChild = node->rightChild;
+      if (nodeParent->leftChild){
+        nodeParent->leftChild->parent = nodeParent;
+      }
+    }else{
+      nodeParent->rightChild = node->rightChild;
+      if(nodeParent->rightChild){
+        nodeParent->rightChild->parent = nodeParent;
+      }
     }
 
-    if (node->rightChild != nullptr) {
-      node->rightChild->parent = nodeParent;
-      node->rightChild = nullptr;
-    }
-
-    // node->updateRank();
+    node->rightChild = node->parent = nullptr;
     node->rank = (node->leftChild) ? node->leftChild->rank + 1 : 0;
     this->insert(node);
 
-    while (nodeParent->parent != nullptr) {
-      nodeParent = nodeParent->parent;
+    if (nodeParent->parent == nullptr){ //parent ptr is a root
+      node->rank = (node->leftChild) ? node->leftChild->rank + 1 : 0;
+    }else{
+      while (nodeParent->parent != nullptr) { // not root
+        int lr = nodeParent->leftChild ? nodeParent->leftChild->rank : -1;
+        int rr = nodeParent->rightChild ? nodeParent->rightChild->rank : -1;
+        int k = (abs(rr - lr) > 1) ? max(rr, lr) : max(rr, lr) + 1;
+        nodeParent->rank = k;
+        nodeParent = nodeParent->parent;
+      }
     }
 
-    nodeParent->updateRank();
-    if (newkey < minRoot->item.key) {
-      minRoot = node;
-    }
-  };
+  }
 
   Node<Object>* removeMin() {
     if (minRoot == nullptr) {
@@ -142,7 +138,7 @@ class RPHeap {
     if (minRoot->rightSibling == minRoot) {
       minRoot = nullptr;  // sibling points to self
     } else {
-      minRoot = minRoot->rightSibling;  
+      minRoot = minRoot->rightSibling;
     }
     assert(this->removeRoot(tmp));
 
@@ -155,13 +151,13 @@ class RPHeap {
     }
     this->collapse();
 
-    this->updateMin();
+    // this->updateMin();
     return tmp;
   }
 
   bool isEmpty() { return (minRoot == nullptr); }
   int getSize() { return this->numRoot; }
-  Node<Object>* getMin() {return this->minRoot;}
+  Node<Object>* getMin() { return this->minRoot; }
 
  private:
   Node<Object>* merge(Node<Object>* node1, Node<Object>* node2) {
@@ -183,7 +179,7 @@ class RPHeap {
     }
     node2->leftChild = node1;
     node1->parent = node2;
-    if(node1 == minRoot){
+    if (node1 == minRoot) {
       minRoot = node2;
     }
     node1->leftSibling->rightSibling = node1->rightSibling;
@@ -227,6 +223,7 @@ class RPHeap {
       root->leftChild = nullptr;
     }
     root->rank = -1;
+    this->heapSize -= 1;
     return true;
   }
 
@@ -238,10 +235,7 @@ class RPHeap {
     for (int i = 0; i < N; i++) {
       Node<Object>* p = ptr;
       ptr = ptr->rightSibling;
-      if (rankArray[p->rank] == nullptr) {
-        rankArray[p->rank] = p;
-        continue;
-      }
+      // Multi_pass
       while (rankArray[p->rank] != nullptr) {
         int rank = p->rank;
         p = this->merge(rankArray[rank], p);
@@ -249,11 +243,20 @@ class RPHeap {
       }
 
       rankArray[p->rank] = p;
+      // Multipass end
       if (p->item.key < minRoot->item.key) minRoot = p;
-
     }
   }
+
+  inline int MaxBucketSize()  // ceil(log2(size)) + 1
+  {
+    int _Bit = 1, _Count = heapSize;
+    while (_Count >>= 1) _Bit++;
+    return _Bit + 1;
+  }
+
   Node<Object>* minRoot;
   int numRoot = 0;
+  int heapSize = 0;
 };
 #endif
