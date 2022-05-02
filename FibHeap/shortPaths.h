@@ -17,17 +17,15 @@ typedef struct node{
    } nodeitem;
 
 
-void DijkstraFibHeap(nodeitem N[], int Or, int Nm)
+void DijkstraFibHeap(Node * myNodes[], int Or, int Nm)
 {
    FibHeap *thisHeap; // Fibnacci Heap
    struct arc *edge;
    Node *node, *v;
    thisHeap = new FibHeap;
-   Node * myNodes[MAX_SIZE];
-   N[Or].key = 0;
+   myNodes[Or]->key = 0;
    for (int i = 1; i <= Nm; i++)
    {
-       myNodes[i] = new Node(N[i].id, N[i].key, N[i].first);
        thisHeap->insert(myNodes[i]);
    }
    while (!thisHeap->isEmpty())
@@ -44,11 +42,6 @@ void DijkstraFibHeap(nodeitem N[], int Or, int Nm)
            }
            edge = edge->next;
        }
-   }
-   for (int i = 1; i <= Nm; i++)
-   {
-       N[i].key = myNodes[i]->key;
-       N[i].P = myNodes[i]->P;
    }
         
 } /* end DijkstraHeap */ 

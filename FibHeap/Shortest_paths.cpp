@@ -92,26 +92,29 @@ int main(int argc, char *argv[])
   ofstream outfile(argv[2]);
 
 // Reset for next algorithm: FibHeap
-
+  Node * myNodes[MAX_SIZE];
   for (int i=0;i<=Nm;i++){
 	  Nodes[i].key = LARGE;
 	  Nodes[i].P = -1;
 	  Nodes[i].position = -1;
+    myNodes[i] = new Node(Nodes[i].id, Nodes[i].key, Nodes[i].first);
   }
-
-  
-
 
   cout << "CALLING Dijkstra Fibonacci Heap\n" << endl;
   outfile << "Dijkstra Fibonacci Heap\n"<< endl;
   start = chrono::steady_clock::now();
-  DijkstraFibHeap(Nodes,Or,Nm);
+  DijkstraFibHeap(myNodes,Or,Nm);
   stop = chrono::steady_clock::now();
   difference_in_time = stop - start;
   difference_in_seconds = double(difference_in_time.count());
   outfile << "CPU TIME in SECS " << difference_in_seconds<<endl;
   outfile << endl;
 
+  for (int i = 1; i <= Nm; i++)
+  {
+    Nodes[i].key = myNodes[i]->key;
+    Nodes[i].P = myNodes[i]->P;
+  }
   printOutput(Nodes,Or,Nm,outfile);
 
 

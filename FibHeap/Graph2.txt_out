@@ -1,6 +1,6 @@
 Dijkstra Fibonacci Heap
 
-CPU TIME in SECS 0.0236124
+CPU TIME in SECS 0.0191311
 
 Shortest distance for 1 to 3001 is 141
 3001 --> 25423 --> 20732 --> 13000 --> 6515 --> 3863 --> 10263 --> 27924 --> 1
