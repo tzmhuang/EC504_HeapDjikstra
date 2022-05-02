@@ -2,6 +2,7 @@
 #define FIBHEAP_H_
 
 #include <vector>
+#include <cmath>
 
 using namespace std;
 const int MAX_SIZE = 200000;
@@ -39,9 +40,6 @@ public:
     bool addSibling(Node * node);
     bool remove();
 
-    Node * leftMostSibling();
-    Node * rightMostSibling();
-
 };
 
 
@@ -49,6 +47,8 @@ class FibHeap {
 private:
     Node * rootListByRank[MAX_SIZE];
     Node * minRoot;
+    Node * leftMostRoot;
+    int numNodes;
     bool link(Node * root);
 
 public:
@@ -101,13 +101,13 @@ bool Node::addChild(Node * node)
 
 bool Node::addSibling(Node * node)
 {
-    Node * tmp = rightMostSibling();
-    if (tmp == nullptr)
-        return false;
-    tmp->rightSibling = node;
-    node->leftSibling = tmp;
+    Node * tmp = this->rightSibling;
+    this->rightSibling = node;
+    node->leftSibling = this;
+    node->rightSibling = tmp;
     node->parent = this->parent;
-    node->rightSibling = nullptr;
+    if (tmp)
+        tmp->leftSibling = node;
 
     if (this->parent)
         this->parent->rank++;
@@ -120,7 +120,7 @@ bool Node::remove()
     {
         parent->rank--;
         if (leftSibling)
-            parent->children = leftSibling;
+            ;
         else if (rightSibling)
             parent->children = rightSibling;
         else 
@@ -136,29 +136,12 @@ bool Node::remove()
     return true;
 }
 
-Node* Node::leftMostSibling()
-{
-    if (this == nullptr)
-        return nullptr;
-    Node * tmp = this;
-    while (tmp->leftSibling)
-        tmp = tmp->leftSibling;
-    return tmp;
-}
-
-Node * Node::rightMostSibling()
-{
-    if (this == nullptr)
-        return nullptr;
-    Node * tmp = this;
-    while (tmp->rightSibling)
-        tmp = tmp->rightSibling;
-    return tmp;
-}
 
 FibHeap::FibHeap()
 {
     minRoot = nullptr;
+    leftMostRoot = nullptr;
+    numNodes = 0;
 }
 
 FibHeap::~FibHeap()
@@ -176,13 +159,17 @@ bool FibHeap::insert(Node * node)
     if (node == nullptr)
         return false;
     if (minRoot == nullptr)
+    {
         minRoot = node;
+        leftMostRoot = node;
+    }
     else
     {
         minRoot->addSibling(node);
         if (minRoot->key > node->key)
             minRoot = node;
     }
+    numNodes += 1;
     return true;
 }
 
@@ -193,8 +180,9 @@ Node * FibHeap::findMin()
 
 Node * FibHeap::removeMin()
 {
-    Node * tmp = minRoot->children->leftMostSibling();
+    Node * tmp = minRoot->children;
     Node * nextTmp = nullptr;
+    
 
     while (tmp != nullptr)
     {
@@ -204,16 +192,21 @@ Node * FibHeap::removeMin()
         tmp = nextTmp;
     }
 
-    tmp = minRoot->leftMostSibling();
+    tmp = leftMostRoot;
     if (tmp == minRoot)
     {
         if (minRoot->rightSibling)
+        {
             tmp = minRoot->rightSibling;
+            leftMostRoot = tmp;
+        }
         else
         {
             Node * result = minRoot;
             minRoot->remove();
             minRoot = nullptr;
+            leftMostRoot = nullptr;
+            numNodes -= 1;
             return result;
         }
     }
@@ -221,7 +214,8 @@ Node * FibHeap::removeMin()
     minRoot->remove();
     
     minRoot = tmp;
-    for(int i = 0; i < MAX_SIZE; i++)
+    int size = ceil(log(numNodes) / log(2));
+    for(int i = 0; i < size; i++)
         rootListByRank[i] = nullptr;
     while (tmp)
     {
@@ -231,6 +225,7 @@ Node * FibHeap::removeMin()
         link(tmp);
         tmp = nextTmp;
     }
+    numNodes -= 1;
     return result;
 }
 
@@ -248,6 +243,8 @@ bool FibHeap::link(Node * root)
         
         if (root->key < linkNode->key || root == minRoot)
         {
+            if (linkNode == leftMostRoot)
+                leftMostRoot = linkNode->rightSibling;
             linkNode->remove();
             root->addChild(linkNode);
             if (rootListByRank[root->rank] != nullptr)
@@ -257,6 +254,8 @@ bool FibHeap::link(Node * root)
         }
         else
         {
+            if (root == leftMostRoot)
+                leftMostRoot = root->rightSibling;
             root->remove();
             linkNode->addChild(root);
             if (rootListByRank[linkNode->rank] != nullptr)
@@ -273,6 +272,8 @@ void FibHeap::decreaseKey(Node * node, int newkey)
     node->key = newkey;
     Node * tmp = node;
     Node * parent = nullptr;
+    if (node == minRoot)
+        return ;
     while (tmp->parent && tmp->parent->state == LABELED)
     {
         parent = tmp->parent;
