@@ -90,7 +90,7 @@ void DijkstraHeap(node_t *N[], int Or, int Nm)
    
    // You write a Dijkstra algorithm using a binary heap; you can reuse the one from HW 2 with minor variations
 
-   auto **current_key = static_cast<node_t **>(calloc(Nm, sizeof(node_t *)));
+   auto **current_key = static_cast<node_t **>(calloc(Nm + 1, sizeof(node_t *)));
 
    N[Or]->key = 0;
    for (int i = 1; i <= Nm; i++)
