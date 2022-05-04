@@ -10,7 +10,7 @@ MY_INCLUDES =
 
 
 CCX = g++
-CXXFLAGS = -g -std=c++11 violationHeap.cpp
+CXXFLAGS = -g -std=c++11 
 # -Wall
 
 #============================================================
@@ -20,7 +20,7 @@ Shortest_paths.o: Shortest_paths.cpp shortPaths.h
 	$(CCX)  -c $(CXXFLAGS) $<   
 
 $(TARGET) :   $(C_OBJS)
-	$(CCX) $(CXXFLAGS)  $^ $(LIBDIRS)  -o $@
+	$(CCX) $(CXXFLAGS) violationHeap.cpp $^ $(LIBDIRS)  -o $@
 
 # Implicit rules: $@ = target name, $< = first prerequisite name, $^ = name of all prerequisites
 #============================================================
